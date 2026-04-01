@@ -3,7 +3,7 @@ module github.com/platform-engineering-labs/formae-plugin-proxmox
 go 1.25
 
 require (
-	github.com/platform-engineering-labs/formae/pkg/plugin v0.1.11
+	github.com/platform-engineering-labs/formae/pkg/plugin v0.1.21
 	github.com/platform-engineering-labs/formae/pkg/plugin-conformance-tests v0.1.19
 )
 
@@ -22,7 +22,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/masterminds/semver v1.5.0 // indirect
 	github.com/platform-engineering-labs/formae/pkg/api/model v0.1.1 // indirect
-	github.com/platform-engineering-labs/formae/pkg/model v0.1.4 // indirect
+	github.com/platform-engineering-labs/formae/pkg/model v0.1.6 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.1 // indirect
 	github.com/theory/jsonpath v0.10.2 // indirect
