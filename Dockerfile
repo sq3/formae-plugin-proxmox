@@ -10,6 +10,6 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -o proxmox .
 
 FROM busybox:stable
-COPY --from=builder /build/proxmox /plugin/proxmox/v0.1.0/proxmox
-COPY schema/pkl/ /plugin/proxmox/v0.1.0/schema/pkl/
-COPY formae-plugin.pkl /plugin/proxmox/v0.1.0/formae-plugin.pkl
+COPY --from=builder /build/proxmox /plugin/proxmox
+COPY schema/pkl/ /plugin/schema/pkl/
+COPY formae-plugin.pkl /plugin/formae-plugin.pkl
