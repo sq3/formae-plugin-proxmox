@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Example: Create a QEMU/KVM virtual machine
+//
+// Prerequisites:
+//   export PROXMOX_API_URL="https://pve.example.com:8006"
+//   export PROXMOX_TOKEN_ID="user@realm!tokenname"
+//   export PROXMOX_SECRET="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+//   export PROXMOX_NODE="pve"
+//
+// Usage:
+//   formae eval examples/vm.pkl
+//   formae apply --mode reconcile --simulate examples/vm.pkl
+//   formae apply --mode reconcile --watch examples/vm.pkl
+
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+import "@proxmox/proxmox.pkl"
+import "@proxmox/compute/vm.pkl" as vm
+
+forma {
+  new formae.Stack {
+    label = "example-stack"
+    description = "Formae Proxmox example stack"
+  }
+
+  new formae.Target {
+    label = "proxmox-target"
+    config = new proxmox.Config {
+      apiUrl = read?("env:PROXMOX_API_URL")
+      node = read?("env:PROXMOX_NODE")
+    }
+  }
+
+  // Basic VM with minimal configuration
+  new vm.VM {
+    label = "example-vm"
+    vmid = 300
+    name = "formae-managed-vm"
+    cores = 2
+    sockets = 1
+    memory = 2048
+    ostype = "l26"
+    scsihw = "virtio-scsi-pci"
+    net0 = "virtio,bridge=vmbr0"
+    description = "Example VM created by Formae"
+    tags = "formae;example"
+  }
+}

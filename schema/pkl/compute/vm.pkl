@@ -1,0 +1,196 @@
+module vm
+
+import "@formae/formae.pkl"
+import "../proxmox.pkl"
+
+const type = "Proxmox::Compute::VM"
+
+/// Resolvable reference to a VM resource
+open class VMResolvable extends formae.Resolvable {
+  hidden type = module.type
+
+  /// The VM's unique identifier (vmid)
+  hidden vmid: VMResolvable = (this) {
+    property = "vmid"
+  }
+
+  /// The VM's name
+  hidden name: VMResolvable = (this) {
+    property = "name"
+  }
+}
+
+/// Proxmox VE QEMU Virtual Machine
+/// Create: POST /nodes/{node}/qemu
+/// Read: GET /nodes/{node}/qemu/{vmid}/config + /status/current
+/// Update: PUT /nodes/{node}/qemu/{vmid}/config
+/// Delete: DELETE /nodes/{node}/qemu/{vmid}
+@proxmox.ResourceHint {
+  type = module.type
+  identifier = "vmid"
+}
+open class VM extends formae.Resource {
+  // ========== Create/Update Properties ==========
+
+  /// VM ID (unique numeric identifier, 100-999999999)
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  vmid: Int
+
+  /// VM name
+  @proxmox.FieldHint {
+    required = true
+  }
+  name: String
+
+  /// Number of CPU cores per socket
+  @proxmox.FieldHint
+  cores: Int?
+
+  /// Number of CPU sockets
+  @proxmox.FieldHint
+  sockets: Int?
+
+  /// Amount of RAM in MB
+  @proxmox.FieldHint
+  memory: Int?
+
+  /// Guest OS type
+  @proxmox.FieldHint
+  ostype: (proxmox.OsType|String)?
+
+  /// SCSI controller type
+  @proxmox.FieldHint
+  scsihw: (proxmox.ScsiHw|String)?
+
+  /// BIOS type (seabios or ovmf for UEFI)
+  @proxmox.FieldHint
+  bios: (proxmox.BiosType|String)?
+
+  /// CPU type (e.g., "host", "kvm64", "x86-64-v2-AES")
+  @proxmox.FieldHint
+  cpu: String?
+
+  /// SCSI disk 0 (e.g., "local-lvm:32,format=qcow2")
+  @proxmox.FieldHint
+  scsi0: String?
+
+  /// SCSI disk 1
+  @proxmox.FieldHint
+  scsi1: String?
+
+  /// IDE device 2 (commonly used for CD-ROM, e.g., "local:iso/ubuntu.iso,media=cdrom")
+  @proxmox.FieldHint
+  ide2: String?
+
+  /// Network device 0 (e.g., "virtio,bridge=vmbr0")
+  @proxmox.FieldHint
+  net0: String?
+
+  /// Network device 1
+  @proxmox.FieldHint
+  net1: String?
+
+  /// Serial device 0 (e.g., "socket" for serial console)
+  @proxmox.FieldHint
+  serial0: String?
+
+  /// VGA display type (e.g., "serial0", "std", "virtio")
+  @proxmox.FieldHint
+  vga: String?
+
+  /// Boot order (e.g., "order=scsi0;ide2;net0")
+  @proxmox.FieldHint
+  boot: String?
+
+  /// Cloud-init: IP configuration (e.g., "ip=dhcp" or "ip=10.0.0.2/24,gw=10.0.0.1")
+  @proxmox.FieldHint
+  ipconfig0: String?
+
+  /// Cloud-init: IP configuration for second interface
+  @proxmox.FieldHint
+  ipconfig1: String?
+
+  /// Cloud-init: SSH public keys (URL-encoded)
+  @proxmox.FieldHint
+  sshkeys: String?
+
+  /// Cloud-init: DNS nameserver
+  @proxmox.FieldHint
+  nameserver: String?
+
+  /// Cloud-init: DNS search domain
+  @proxmox.FieldHint
+  searchdomain: String?
+
+  /// Cloud-init: user
+  @proxmox.FieldHint
+  ciuser: String?
+
+  /// Cloud-init: password
+  @proxmox.FieldHint {
+    writeOnly = true
+  }
+  cipassword: String?
+
+  /// Cloud-init: custom cloud-init drive (e.g., "local-lvm:cloudinit")
+  @proxmox.FieldHint
+  ide0: String?
+
+  /// Enable/disable the QEMU Guest Agent
+  @proxmox.FieldHint
+  agent: String?
+
+  /// Machine type (e.g., "q35", "i440fx", "q35+pve0")
+  @proxmox.FieldHint
+  machine: String?
+
+  /// Start VM on boot
+  @proxmox.FieldHint
+  onboot: Boolean?
+
+  /// Description/notes for the VM
+  @proxmox.FieldHint
+  description: String?
+
+  /// Tags (comma-separated)
+  @proxmox.FieldHint
+  tags: String?
+
+  /// Enable NUMA
+  @proxmox.FieldHint
+  numa: Boolean?
+
+  /// Hotplug features (e.g., "network,disk,usb")
+  @proxmox.FieldHint
+  hotplug: String?
+
+  /// VM protection (prevents removal)
+  @proxmox.FieldHint
+  protection: Boolean?
+
+  // ========== Read-Only Response Properties ==========
+  // Populated from /nodes/{node}/qemu/{vmid}/status/current:
+  // - status: String - VM status (running, stopped, paused)
+  // - uptime: Int - VM uptime in seconds
+  // - cpu: Float - Current CPU usage
+  // - mem: Int - Current memory usage in bytes
+  // - maxmem: Int - Maximum memory in bytes
+  // - maxdisk: Int - Maximum disk size in bytes
+  // - netin: Int - Network bytes received
+  // - netout: Int - Network bytes sent
+  // - diskread: Int - Disk bytes read
+  // - diskwrite: Int - Disk bytes written
+  // - pid: Int - QEMU process ID
+  // - qmpstatus: String - QEMU machine protocol status
+
+  local parent = this
+
+  /// Provides resolvable references to this VM's properties
+  hidden res: VMResolvable = new {
+    label = parent.label
+    stack = parent.stack?.label
+  }
+}

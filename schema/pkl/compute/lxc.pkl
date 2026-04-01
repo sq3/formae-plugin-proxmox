@@ -1,0 +1,182 @@
+module lxc
+
+import "@formae/formae.pkl"
+import "../proxmox.pkl"
+
+const type = "Proxmox::Compute::LXC"
+
+/// Resolvable reference to an LXC container resource
+open class LXCResolvable extends formae.Resolvable {
+  hidden type = module.type
+
+  /// The container's unique identifier (vmid)
+  hidden vmid: LXCResolvable = (this) {
+    property = "vmid"
+  }
+
+  /// The container's hostname
+  hidden hostname: LXCResolvable = (this) {
+    property = "hostname"
+  }
+}
+
+/// Proxmox VE LXC Container
+/// Create: POST /nodes/{node}/lxc
+/// Read: GET /nodes/{node}/lxc/{vmid}/config + /status/current
+/// Update: PUT /nodes/{node}/lxc/{vmid}/config
+/// Delete: DELETE /nodes/{node}/lxc/{vmid}
+@proxmox.ResourceHint {
+  type = module.type
+  identifier = "vmid"
+}
+open class LXC extends formae.Resource {
+  // ========== Create/Update Properties ==========
+
+  /// Container ID (unique numeric identifier, 100-999999999)
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  vmid: Int
+
+  /// OS template (e.g., "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst")
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  ostemplate: String
+
+  /// Container hostname
+  @proxmox.FieldHint
+  hostname: String?
+
+  /// Root filesystem (e.g., "local-lvm:8" for 8 GiB)
+  @proxmox.FieldHint
+  rootfs: String?
+
+  /// Number of CPU cores
+  @proxmox.FieldHint
+  cores: Int?
+
+  /// CPU usage limit (fractional, e.g., 1.5 = 1.5 cores)
+  @proxmox.FieldHint
+  cpulimit: Number?
+
+  /// RAM in MB
+  @proxmox.FieldHint
+  memory: Int?
+
+  /// Swap in MB
+  @proxmox.FieldHint
+  swap: Int?
+
+  /// Network device 0 (e.g., "name=eth0,bridge=vmbr0,ip=dhcp")
+  @proxmox.FieldHint
+  net0: String?
+
+  /// Network device 1
+  @proxmox.FieldHint
+  net1: String?
+
+  /// DNS nameserver
+  @proxmox.FieldHint
+  nameserver: String?
+
+  /// DNS search domain
+  @proxmox.FieldHint
+  searchdomain: String?
+
+  /// Root password
+  @proxmox.FieldHint {
+    writeOnly = true
+  }
+  password: String?
+
+  /// SSH public keys (OpenSSH format, newline-separated)
+  @proxmox.FieldHint {
+    writeOnly = true
+    createOnly = true
+  }
+  `ssh-public-keys`: String?
+
+  /// Run as unprivileged container
+  @proxmox.FieldHint
+  unprivileged: Boolean?
+
+  /// Start on host boot
+  @proxmox.FieldHint
+  onboot: Boolean?
+
+  /// Start container immediately after creation
+  @proxmox.FieldHint {
+    createOnly = true
+  }
+  start: Boolean?
+
+  /// Advanced features (e.g., "nesting=1,keyctl=1")
+  @proxmox.FieldHint
+  features: String?
+
+  /// Architecture (amd64, arm64, armhf, i386)
+  @proxmox.FieldHint
+  arch: String?
+
+  /// Description/notes
+  @proxmox.FieldHint
+  description: String?
+
+  /// Tags (semicolon-separated)
+  @proxmox.FieldHint
+  tags: String?
+
+  /// Container protection (prevents removal)
+  @proxmox.FieldHint
+  protection: Boolean?
+
+  /// Mount point 0
+  @proxmox.FieldHint
+  mp0: String?
+
+  /// Mount point 1
+  @proxmox.FieldHint
+  mp1: String?
+
+  /// Timezone (e.g., "Europe/Berlin" or "host")
+  @proxmox.FieldHint
+  timezone: String?
+
+  /// Number of TTY devices (0-6)
+  @proxmox.FieldHint
+  tty: Int?
+
+  /// OS type (debian, ubuntu, centos, fedora, opensuse, archlinux, alpine, gentoo, nixos)
+  @proxmox.FieldHint
+  ostype: String?
+
+  /// Startup order config (e.g., "order=1,up=5,down=5")
+  @proxmox.FieldHint
+  startup: String?
+
+  // ========== Read-Only Response Properties ==========
+  // Populated from /nodes/{node}/lxc/{vmid}/status/current:
+  // - status: String - Container status (running, stopped)
+  // - uptime: Int - Uptime in seconds
+  // - cpu: Float - Current CPU usage
+  // - mem: Int - Current memory usage in bytes
+  // - maxmem: Int - Maximum memory in bytes
+  // - disk: Int - Current disk usage in bytes
+  // - maxdisk: Int - Maximum disk size in bytes
+  // - swap: Int - Current swap usage in bytes
+  // - maxswap: Int - Maximum swap in bytes
+  // - netin: Int - Network bytes received
+  // - netout: Int - Network bytes sent
+  // - pid: Int - Container init PID
+
+  local parent = this
+
+  /// Provides resolvable references to this container's properties
+  hidden res: LXCResolvable = new {
+    label = parent.label
+    stack = parent.stack?.label
+  }
+}

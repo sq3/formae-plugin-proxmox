@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: Apache-2.0
+// Example: Proxmox Storage Configurations
+
+amends "@formae/formae.pkl"
+
+import "@proxmox/storage/storage.pkl"
+
+// Directory storage for ISO images and backups
+local_backup = new storage.Storage {
+  label = "local-backup"
+  storage = "local-backup"
+  `type` = "dir"
+  path = "/mnt/backup"
+  content = "backup,iso,vztmpl"
+  shared = false
+}
+
+// NFS storage for VM disk images
+nfs_images = new storage.Storage {
+  label = "nfs-images"
+  storage = "nfs-images"
+  `type` = "nfs"
+  server = "nas.example.com"
+  export = "/volume1/proxmox"
+  content = "images,rootdir"
+  shared = true
+}
+
+// LVM thin storage for VMs
+lvm_thin = new storage.Storage {
+  label = "lvm-data"
+  storage = "lvm-data"
+  `type` = "lvmthin"
+  vgname = "pve"
+  thinpool = "data"
+  content = "images,rootdir"
+}
+
+// ZFS pool storage
+zfs_pool = new storage.Storage {
+  label = "zfs-local"
+  storage = "zfs-local"
+  `type` = "zfspool"
+  pool = "rpool/data"
+  content = "images,rootdir"
+  sparse = true
+}
+
+// Proxmox Backup Server
+pbs_backup = new storage.Storage {
+  label = "pbs-main"
+  storage = "pbs-main"
+  `type` = "pbs"
+  server = "pbs.example.com"
+  datastore = "datastore1"
+  username = "backup@pbs"
+  password = "secret"
+  fingerprint = "AA:BB:CC:DD:..."
+  content = "backup"
+}
+
+// CIFS/SMB storage for templates
+cifs_templates = new storage.Storage {
+  label = "smb-templates"
+  storage = "smb-templates"
+  `type` = "cifs"
+  server = "fileserver.example.com"
+  share = "proxmox-templates"
+  username = "proxmox"
+  password = "secret"
+  content = "vztmpl,iso,snippets"
+}

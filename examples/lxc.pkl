@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Example: Create an LXC container
+//
+// Prerequisites:
+//   export PROXMOX_API_URL="https://pve.example.com:8006"
+//   export PROXMOX_TOKEN_ID="user@realm!tokenname"
+//   export PROXMOX_SECRET="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+//   export PROXMOX_NODE="pve"
+//
+// Note: Ensure you have a container template available, e.g.:
+//   pveam update
+//   pveam download local debian-12-standard_12.2-1_amd64.tar.zst
+//
+// Usage:
+//   formae eval examples/lxc.pkl
+//   formae apply --mode reconcile --simulate examples/lxc.pkl
+//   formae apply --mode reconcile --watch examples/lxc.pkl
+
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+import "@proxmox/proxmox.pkl"
+import "@proxmox/compute/lxc.pkl" as lxc
+
+forma {
+  new formae.Stack {
+    label = "example-stack"
+    description = "Formae Proxmox example stack"
+  }
+
+  new formae.Target {
+    label = "proxmox-target"
+    config = new proxmox.Config {
+      apiUrl = read?("env:PROXMOX_API_URL")
+      node = read?("env:PROXMOX_NODE")
+    }
+  }
+
+  // Basic LXC container
+  new lxc.LXC {
+    label = "example-container"
+    vmid = 200
+    ostemplate = "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst"
+    hostname = "example-container"
+    rootfs = "local-lvm:8"
+    cores = 1
+    memory = 512
+    swap = 256
+    net0 = "name=eth0,bridge=vmbr0,ip=dhcp"
+    unprivileged = true
+    start = true
+    onboot = true
+    description = "Example container created by Formae"
+    tags = "formae;example"
+  }
+}

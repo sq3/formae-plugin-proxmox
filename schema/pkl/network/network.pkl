@@ -1,0 +1,206 @@
+module network
+
+import "@formae/formae.pkl"
+import "../proxmox.pkl"
+
+const type = "Proxmox::Network::Interface"
+
+/// Network interface types
+typealias InterfaceType = "bridge" |  // Linux bridge
+  "bond" |                            // Network bonding
+  "vlan" |                            // VLAN interface
+  "eth" |                             // Physical ethernet
+  "OVSBridge" |                       // Open vSwitch bridge
+  "OVSBond" |                         // Open vSwitch bond
+  "OVSPort" |                         // Open vSwitch port
+  "OVSIntPort"                        // Open vSwitch internal port
+
+/// Bond modes
+typealias BondMode = "balance-rr" |   // Round-robin
+  "active-backup" |                   // Active-backup
+  "balance-xor" |                     // XOR
+  "broadcast" |                       // Broadcast
+  "802.3ad" |                         // LACP
+  "balance-tlb" |                     // Adaptive transmit
+  "balance-alb"                       // Adaptive load balancing
+
+/// Bond hash policy
+typealias BondHashPolicy = "layer2" |
+  "layer2+3" |
+  "layer3+4"
+
+/// Resolvable reference to a Network Interface resource
+open class InterfaceResolvable extends formae.Resolvable {
+  hidden type = module.type
+
+  /// The interface name
+  hidden iface: InterfaceResolvable = (this) {
+    property = "iface"
+  }
+
+  /// The interface address
+  hidden address: InterfaceResolvable = (this) {
+    property = "address"
+  }
+}
+
+/// Proxmox VE Network Interface Configuration
+/// Create: POST /nodes/{node}/network
+/// Read: GET /nodes/{node}/network/{iface}
+/// Update: PUT /nodes/{node}/network/{iface}
+/// Delete: DELETE /nodes/{node}/network/{iface}
+@proxmox.ResourceHint {
+  type = module.type
+  identifier = "iface"
+}
+open class Interface extends formae.Resource {
+  // ========== Required Properties ==========
+
+  /// Interface name (e.g., vmbr0, bond0, eth0.100)
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  iface: String
+
+  /// Interface type
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  `type`: InterfaceType
+
+  // ========== Common Properties ==========
+
+  /// Enable autostart on boot
+  @proxmox.FieldHint
+  autostart: Boolean?
+
+  /// IPv4 address in CIDR notation (e.g., 192.168.1.1/24)
+  @proxmox.FieldHint
+  cidr: String?
+
+  /// IPv4 address (legacy, use cidr instead)
+  @proxmox.FieldHint
+  address: String?
+
+  /// IPv4 netmask (legacy, use cidr instead)
+  @proxmox.FieldHint
+  netmask: String?
+
+  /// IPv4 gateway
+  @proxmox.FieldHint
+  gateway: String?
+
+  /// IPv6 address in CIDR notation
+  @proxmox.FieldHint
+  cidr6: String?
+
+  /// IPv6 address (legacy)
+  @proxmox.FieldHint
+  address6: String?
+
+  /// IPv6 netmask (legacy)
+  @proxmox.FieldHint
+  netmask6: String?
+
+  /// IPv6 gateway
+  @proxmox.FieldHint
+  gateway6: String?
+
+  /// MTU (Maximum Transmission Unit)
+  @proxmox.FieldHint
+  mtu: Int?
+
+  /// Interface comments
+  @proxmox.FieldHint
+  comments: String?
+
+  /// Interface comments (alternative field)
+  @proxmox.FieldHint
+  comments6: String?
+
+  // ========== Bridge Properties (type=bridge) ==========
+
+  /// Bridge ports (space-separated list of interfaces)
+  @proxmox.FieldHint
+  bridge_ports: String?
+
+  /// Enable VLAN awareness on bridge
+  @proxmox.FieldHint
+  bridge_vlan_aware: Boolean?
+
+  /// VLAN IDs allowed on bridge (e.g., "2-4094")
+  @proxmox.FieldHint
+  bridge_vids: String?
+
+  /// Enable Spanning Tree Protocol
+  @proxmox.FieldHint
+  bridge_stp: String?
+
+  /// Bridge forward delay (seconds)
+  @proxmox.FieldHint
+  bridge_fd: Int?
+
+  // ========== Bond Properties (type=bond) ==========
+
+  /// Slave interfaces for bond (space-separated)
+  @proxmox.FieldHint
+  slaves: String?
+
+  /// Bond mode
+  @proxmox.FieldHint
+  bond_mode: (BondMode|String)?
+
+  /// Primary interface for active-backup mode
+  @proxmox.FieldHint
+  bond_primary: String?
+
+  /// Hash policy for load balancing modes
+  @proxmox.FieldHint
+  bond_xmit_hash_policy: (BondHashPolicy|String)?
+
+  /// MII link monitoring frequency (ms)
+  @proxmox.FieldHint
+  bond_miimon: Int?
+
+  // ========== VLAN Properties (type=vlan) ==========
+
+  /// VLAN tag (1-4094)
+  @proxmox.FieldHint
+  `vlan-id`: Int?
+
+  /// Raw device for VLAN
+  @proxmox.FieldHint
+  `vlan-raw-device`: String?
+
+  // ========== Open vSwitch Properties ==========
+
+  /// OVS bridge name (for OVS ports)
+  @proxmox.FieldHint
+  ovs_bridge: String?
+
+  /// OVS bond mode
+  @proxmox.FieldHint
+  ovs_bonds: String?
+
+  /// OVS options
+  @proxmox.FieldHint
+  ovs_options: String?
+
+  /// OVS ports (for OVS bridges)
+  @proxmox.FieldHint
+  ovs_ports: String?
+
+  /// OVS VLAN tag
+  @proxmox.FieldHint
+  ovs_tag: Int?
+
+  local parent = this
+
+  /// Provides resolvable references to this interface's properties
+  hidden res: InterfaceResolvable = new {
+    label = parent.label
+    stack = parent.stack?.label
+  }
+}

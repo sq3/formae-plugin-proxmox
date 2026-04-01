@@ -1,0 +1,10 @@
+name = "proxmox"
+version = "0.1.0"
+namespace = "Proxmox"
+description = "Proxmox VE resource plugin for Formae"
+license = "Apache-2.0"
+minFormaeVersion = "0.80.0"
+
+output {
+  renderer = new JsonRenderer {}
+}

@@ -1,0 +1,45 @@
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+
+// Resource imports
+import "@proxmox/compute/vm.pkl" as vm
+import "@proxmox/proxmox.pkl" as proxmox
+
+forma {
+
+  local myStack = new formae.Stack {
+    // Please provide a stack to bring the resources in this Forma under management
+    // label = ""
+    description = "This was generated"
+  }
+  myStack
+
+
+  local proxmoxTarget = new formae.Target {
+    label = "proxmox-target"
+    namespace = "PROXMOX"
+    discoverable = true
+    config {
+      Type = "Proxmox"
+      ApiUrl = "https://192.168.0.60:8006"
+      Node = "homeserver"
+    }
+  }
+  proxmoxTarget
+
+  new vm.VM {
+    label = "h8s"
+    vmid = 100
+    name = "h8s"
+    target = proxmoxTarget.res
+    stack = myStack.res
+  }
+
+  new vm.VM {
+    label = "homeassistant"
+    vmid = 200
+    name = "homeassistant"
+    target = proxmoxTarget.res
+    stack = myStack.res
+  }
+}

@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// Example: Create multiple VMs for a web application stack
+//
+// This example demonstrates creating a multi-tier application:
+// - Load balancer VM
+// - Application server VMs
+// - Database VM
+//
+// Prerequisites:
+//   export PROXMOX_API_URL="https://pve.example.com:8006"
+//   export PROXMOX_TOKEN_ID="user@realm!tokenname"
+//   export PROXMOX_SECRET="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+//   export PROXMOX_NODE="pve"
+//
+// Usage:
+//   formae eval examples/multi-vm.pkl
+//   formae apply --mode reconcile --simulate examples/multi-vm.pkl
+//   formae apply --mode reconcile --watch examples/multi-vm.pkl
+
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+import "@proxmox/proxmox.pkl"
+import "@proxmox/compute/vm.pkl" as vm
+
+// Base configuration for VMs
+local baseConfig = new Mixin<vm.VM> {
+  ostype = "l26"
+  scsihw = "virtio-scsi-pci"
+  onboot = true
+  agent = "enabled=1"
+}
+
+forma {
+  new formae.Stack {
+    label = "web-app-stack"
+    description = "Multi-tier web application stack"
+  }
+
+  new formae.Target {
+    label = "proxmox-target"
+    config = new proxmox.Config {
+      apiUrl = read?("env:PROXMOX_API_URL")
+      node = read?("env:PROXMOX_NODE")
+    }
+  }
+
+  // Load Balancer
+  (baseConfig) {
+    new vm.VM {
+      label = "lb-01"
+      vmid = 110
+      name = "lb-01"
+      cores = 1
+      memory = 1024
+      net0 = "virtio,bridge=vmbr0"
+      scsi0 = "local-lvm:16"
+      description = "Load balancer"
+      tags = "formae;web-app;loadbalancer"
+    }
+  }
+
+  // Application Servers
+  for (i in IntSeq(1, 2)) {
+    (baseConfig) {
+      new vm.VM {
+        label = "app-0\(i)"
+        vmid = 120 + i
+        name = "app-0\(i)"
+        cores = 2
+        memory = 4096
+        net0 = "virtio,bridge=vmbr0"
+        scsi0 = "local-lvm:32"
+        description = "Application server \(i)"
+        tags = "formae;web-app;application"
+      }
+    }
+  }
+
+  // Database Server
+  (baseConfig) {
+    new vm.VM {
+      label = "db-01"
+      vmid = 130
+      name = "db-01"
+      cores = 4
+      memory = 8192
+      net0 = "virtio,bridge=vmbr0"
+      scsi0 = "local-lvm:100"
+      scsi1 = "local-lvm:200"  // Additional data disk
+      description = "Database server"
+      tags = "formae;web-app;database"
+    }
+  }
+}

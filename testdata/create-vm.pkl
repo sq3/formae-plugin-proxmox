@@ -1,0 +1,30 @@
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+import "@proxmox/proxmox.pkl"
+import "@proxmox/compute/vm.pkl" as vm
+
+forma {
+  new formae.Stack {
+    label = "test-stack"
+    description = "Formae test stack"
+  }
+
+  new formae.Target {
+    label = "proxmox-target"
+    config = new proxmox.Config {
+      apiUrl = read?("env:PROXMOX_API_URL")
+      node = read?("env:PROXMOX_NODE")
+    }
+  }
+
+  new vm.VM {
+    label = "formae-test-vm"
+    vmid = 9999
+    name = "formae-test-vm"
+    cores = 1
+    memory = 512
+    net0 = "virtio,bridge=vmbr0"
+    ostype = "l26"
+    description = "Test VM created by formae"
+  }
+}

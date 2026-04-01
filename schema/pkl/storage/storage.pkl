@@ -1,0 +1,240 @@
+module storage
+
+import "@formae/formae.pkl"
+import "../proxmox.pkl"
+
+const type = "Proxmox::Storage::Storage"
+
+/// Storage content types
+typealias ContentType = "images" |    // VM disk images
+  "rootdir" |                         // Container root directories
+  "vztmpl" |                          // Container templates
+  "iso" |                             // ISO images
+  "backup" |                          // Backup files
+  "snippets"                          // Snippet files (cloud-init, hookscripts)
+
+/// Storage backend types
+typealias StorageType = "dir" |       // Directory
+  "nfs" |                             // NFS share
+  "cifs" |                            // CIFS/SMB share
+  "lvm" |                             // LVM volume group
+  "lvmthin" |                         // LVM thin pool
+  "zfspool" |                         // ZFS pool
+  "iscsi" |                           // iSCSI target
+  "rbd" |                             // Ceph RBD
+  "cephfs" |                          // CephFS
+  "pbs" |                             // Proxmox Backup Server
+  "btrfs"                             // Btrfs
+
+/// Resolvable reference to a Storage resource
+open class StorageResolvable extends formae.Resolvable {
+  hidden type = module.type
+
+  /// The storage identifier
+  hidden storage: StorageResolvable = (this) {
+    property = "storage"
+  }
+}
+
+/// Proxmox VE Storage Configuration
+/// Create: POST /storage
+/// Read: GET /storage/{storage}
+/// Update: PUT /storage/{storage}
+/// Delete: DELETE /storage/{storage}
+@proxmox.ResourceHint {
+  type = module.type
+  identifier = "storage"
+}
+open class Storage extends formae.Resource {
+  // ========== Required Properties ==========
+
+  /// Storage identifier (unique name)
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  storage: String
+
+  /// Storage backend type
+  @proxmox.FieldHint {
+    required = true
+    createOnly = true
+  }
+  `type`: StorageType
+
+  // ========== Common Properties (all storage types) ==========
+
+  /// Allowed content types (comma-separated: images,rootdir,vztmpl,iso,backup,snippets)
+  @proxmox.FieldHint
+  content: String?
+
+  /// List of cluster node names where this storage is usable
+  @proxmox.FieldHint
+  nodes: String?
+
+  /// Mark storage as disabled
+  @proxmox.FieldHint
+  disable: Boolean?
+
+  /// Mark storage as shared (accessible from all nodes)
+  @proxmox.FieldHint
+  shared: Boolean?
+
+  /// Default image format (raw, qcow2, vmdk)
+  @proxmox.FieldHint
+  format: String?
+
+  /// Preallocation mode (off, metadata, falloc, full)
+  @proxmox.FieldHint
+  preallocation: String?
+
+  /// Backup retention policy (keep-last, keep-hourly, keep-daily, etc.)
+  @proxmox.FieldHint
+  `prune-backups`: String?
+
+  // ========== Directory Storage (type=dir) ==========
+
+  /// File system path (required for dir, btrfs)
+  @proxmox.FieldHint
+  path: String?
+
+  // ========== NFS Storage (type=nfs) ==========
+
+  /// NFS server address (required for nfs)
+  @proxmox.FieldHint
+  server: String?
+
+  /// NFS export path (required for nfs)
+  @proxmox.FieldHint
+  export: String?
+
+  /// NFS mount options
+  @proxmox.FieldHint
+  options: String?
+
+  // ========== CIFS Storage (type=cifs) ==========
+
+  /// CIFS share name (required for cifs)
+  @proxmox.FieldHint
+  share: String?
+
+  /// CIFS username
+  @proxmox.FieldHint
+  username: String?
+
+  /// CIFS password
+  @proxmox.FieldHint {
+    writeOnly = true
+  }
+  password: String?
+
+  /// CIFS domain
+  @proxmox.FieldHint
+  domain: String?
+
+  /// SMB protocol version (default, 2.0, 2.1, 3, 3.0, 3.11)
+  @proxmox.FieldHint
+  smbversion: String?
+
+  /// Subdirectory to mount
+  @proxmox.FieldHint
+  subdir: String?
+
+  // ========== LVM Storage (type=lvm, lvmthin) ==========
+
+  /// LVM volume group name (required for lvm, lvmthin)
+  @proxmox.FieldHint
+  vgname: String?
+
+  /// LVM thin pool name (required for lvmthin)
+  @proxmox.FieldHint
+  thinpool: String?
+
+  /// Base volume for snapshots
+  @proxmox.FieldHint
+  base: String?
+
+  /// Wipe removed volumes with zeros
+  @proxmox.FieldHint
+  saferemove: Boolean?
+
+  // ========== ZFS Storage (type=zfspool) ==========
+
+  /// ZFS pool name (required for zfspool)
+  @proxmox.FieldHint
+  pool: String?
+
+  /// ZFS block size
+  @proxmox.FieldHint
+  blocksize: String?
+
+  /// Use sparse volumes
+  @proxmox.FieldHint
+  sparse: Boolean?
+
+  /// Mountpoint for the pool
+  @proxmox.FieldHint
+  mountpoint: String?
+
+  // ========== iSCSI Storage (type=iscsi) ==========
+
+  /// iSCSI portal address (required for iscsi)
+  @proxmox.FieldHint
+  portal: String?
+
+  /// iSCSI target IQN (required for iscsi)
+  @proxmox.FieldHint
+  target: String?
+
+  // ========== Ceph RBD Storage (type=rbd) ==========
+
+  /// Ceph monitor hosts (comma-separated)
+  @proxmox.FieldHint
+  monhost: String?
+
+  /// Use kernel RBD driver
+  @proxmox.FieldHint
+  krbd: Boolean?
+
+  // ========== CephFS Storage (type=cephfs) ==========
+
+  /// CephFS filesystem name (required for cephfs)
+  @proxmox.FieldHint
+  `fs-name`: String?
+
+  /// Use FUSE client instead of kernel driver
+  @proxmox.FieldHint
+  fuse: Boolean?
+
+  // ========== Proxmox Backup Server (type=pbs) ==========
+
+  /// PBS datastore name (required for pbs)
+  @proxmox.FieldHint
+  datastore: String?
+
+  /// PBS server fingerprint
+  @proxmox.FieldHint
+  fingerprint: String?
+
+  /// PBS port (default: 8007)
+  @proxmox.FieldHint
+  port: Int?
+
+  /// Encryption key path
+  @proxmox.FieldHint
+  `encryption-key`: String?
+
+  // ========== BTRFS Storage (type=btrfs) ==========
+
+  /// Treat path as mountpoint
+  @proxmox.FieldHint
+  is_mountpoint: Boolean?
+
+  local parent = this
+
+  /// Provides resolvable references to this storage's properties
+  hidden res: StorageResolvable = new {
+    label = parent.label
+    stack = parent.stack?.label
+  }
+}

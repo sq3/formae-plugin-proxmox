@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: Apache-2.0
+// Network Interface Forma file for discovery
+
+amends "@formae/forma.pkl"
+import "@formae/formae.pkl"
+import "@proxmox/proxmox.pkl"
+import "@proxmox/network/network.pkl"
+
+forma {
+  new formae.Stack {
+    label = "network-stack"
+    description = "Network configuration stack"
+  }
+
+  new formae.Target {
+    label = "proxmox-target"
+    config = new proxmox.Config {
+      apiUrl = read?("env:PROXMOX_API_URL")
+      node = read?("env:PROXMOX_NODE")
+    }
+  }
+
+  // Reference the existing bridge vmbr0 for import
+  new network.Interface {
+    label = "main-bridge"
+    iface = "vmbr0"
+    `type` = "bridge"
+    bridge_ports = "nic0"
+    autostart = true
+    cidr = "192.168.0.60/24"
+    gateway = "192.168.0.1"
+  }
+}

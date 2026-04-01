@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "resolvedDependencies": {
+    "package://hub.platform.engineering/plugins/pkl/schema/pkl/formae/formae@0": {
+      "type": "remote",
+      "uri": "projectpackage://hub.platform.engineering/plugins/pkl/schema/pkl/formae/formae@0.80.1",
+      "checksums": {
+        "sha256": "ff1f31f4967dacdb54e7be3dbe05bef5a480404d3836a06e0718fb536aa3c9f5"
+      }
+    },
+    "package://hub.platform.engineering/plugins/proxmox/schema/pkl/proxmox/proxmox@0": {
+      "type": "local",
+      "uri": "projectpackage://hub.platform.engineering/plugins/proxmox/schema/pkl/proxmox/proxmox@0.1.0",
+      "path": "../schema/pkl"
+    }
+  }
+}
